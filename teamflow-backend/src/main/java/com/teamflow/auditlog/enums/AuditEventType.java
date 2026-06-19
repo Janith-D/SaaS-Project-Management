@@ -1,0 +1,16 @@
+package com.teamflow.auditlog.enums;
+
+public enum AuditEventType {
+    USER_LOGIN,
+    USER_LOGOUT,
+    USER_REGISTERED,
+    PASSWORD_CHANGED,
+    PROFILE_UPDATED,
+    WORKSPACE_CREATED,
+    WORKSPACE_ROLE_CHANGED,
+    MEMBER_REMOVED,
+    PROJECT_CREATED,
+    TASK_CREATED,
+    LOGIN_FAILED,
+    SUBSCRIPTION_CHANGED
+}

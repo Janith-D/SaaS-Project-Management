@@ -19,9 +19,12 @@ public class WorkspaceResponse {
     private String name;
     private String description;
     private String logoUrl;
+    private String slug;
     private UUID ownerId;
     private String ownerName;
     private boolean archived;
     private long memberCount;
+    private long projectCount;
+    private String plan;
     private LocalDateTime createdAt;
 }

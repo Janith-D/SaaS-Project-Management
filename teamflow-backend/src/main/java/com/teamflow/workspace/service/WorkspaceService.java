@@ -10,6 +10,7 @@ import com.teamflow.workspace.entity.Workspace;
 import com.teamflow.workspace.entity.WorkspaceMember;
 import com.teamflow.workspace.enums.InvitationStatus;
 import com.teamflow.workspace.enums.WorkspaceMemberRole;
+import com.teamflow.project.repository.ProjectRepository;
 import com.teamflow.workspace.repository.InvitationRepository;
 import com.teamflow.workspace.repository.WorkspaceMemberRepository;
 import com.teamflow.workspace.repository.WorkspaceRepository;
@@ -28,6 +29,7 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository memberRepository;
     private final InvitationRepository invitationRepository;
+    private final ProjectRepository projectRepository;
     private final UserService userService;
 
     @Transactional
@@ -201,6 +203,10 @@ public class WorkspaceService {
         return memberRepository.countByWorkspaceId(workspaceId);
     }
 
+    public long getProjectCount(UUID workspaceId) {
+        return projectRepository.countByWorkspaceId(workspaceId);
+    }
+
     private Workspace findWorkspace(UUID workspaceId) {
         return workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workspace not found"));
@@ -221,10 +227,13 @@ public class WorkspaceService {
                 .name(workspace.getName())
                 .description(workspace.getDescription())
                 .logoUrl(workspace.getLogoUrl())
+                .slug(workspace.getName().toLowerCase().replaceAll("\\s+", "-"))
                 .ownerId(workspace.getOwner().getId())
                 .ownerName(workspace.getOwner().getFullName())
                 .archived(workspace.isArchived())
                 .memberCount(getMemberCount(workspace.getId()))
+                .projectCount(getProjectCount(workspace.getId()))
+                .plan("FREE")
                 .createdAt(workspace.getCreatedAt())
                 .build();
     }

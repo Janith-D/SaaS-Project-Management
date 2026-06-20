@@ -16,8 +16,28 @@ export const dashboardApi = {
     };
   },
 
+  getProjectDashboard: async (projectId: string): Promise<any> => {
+    const response = await axiosInstance.get<any>(`/projects/${projectId}/dashboard`);
+    return response.data;
+  },
+
+  getUserDashboard: async (): Promise<any> => {
+    const response = await axiosInstance.get<any>("/users/me/dashboard");
+    return response.data;
+  },
+
   getActivityLogs: async (workspaceId: string): Promise<ActivityLog[]> => {
     const response = await axiosInstance.get<any[]>(`/workspaces/${workspaceId}/activity-logs`);
+    return (response.data || []).map(mapActivityLog);
+  },
+
+  getProjectActivityLogs: async (projectId: string): Promise<ActivityLog[]> => {
+    const response = await axiosInstance.get<any[]>(`/projects/${projectId}/activity-logs`);
+    return (response.data || []).map(mapActivityLog);
+  },
+
+  getTaskActivityLogs: async (taskId: string): Promise<ActivityLog[]> => {
+    const response = await axiosInstance.get<any[]>(`/tasks/${taskId}/activity-logs`);
     return (response.data || []).map(mapActivityLog);
   },
 

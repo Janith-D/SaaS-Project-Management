@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useWorkspace } from "../../context/WorkspaceContext";
+import { Workspace } from "../../types/workspace.types";
 import { workspaceApi } from "../../api/workspaceApi";
 import { notificationApi } from "../../api/notificationApi";
-import { Workspace } from "../../types/workspace.types";
+import { Notification } from "../../types/notification.types";
 import {
   FolderKanban,
   Bell,
@@ -21,7 +23,11 @@ import {
   ChevronDown,
   Lock,
   PlusCircle,
-  HelpCircle
+  HelpCircle,
+  Sliders,
+  Shield,
+  FileText,
+  Building
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -34,37 +40,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const { workspaces, activeWorkspace, setActiveWorkspace, workspacesLoaded, refreshWorkspaces } = useWorkspace();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
-
-  // Load workspaces and active workspace selection
-  useEffect(() => {
-    async function loadWorkspaces() {
-      try {
-        const list = await workspaceApi.getWorkspaces();
-        setWorkspaces(list);
-        
-        const savedWsId = localStorage.getItem("activeWorkspaceId");
-        const found = list.find((w) => w.id === savedWsId);
-        if (found) {
-          setActiveWorkspace(found);
-        } else if (list.length > 0) {
-          setActiveWorkspace(list[0]);
-          localStorage.setItem("activeWorkspaceId", list[0].id);
-        }
-      } catch (e) {
-        console.error("Workspace load failure", e);
-      }
-    }
-    loadWorkspaces();
-  }, []);
 
   // Fetch notifications periodically or on mount
   const handleFetchNotifications = async () => {
@@ -125,7 +108,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     workspaceApi
       .createWorkspace({ name: wsName, description: wsDesc })
       .then((newWs) => {
-        setWorkspaces((prev) => [...prev, newWs]);
+        refreshWorkspaces();
         handleWorkspaceChange(newWs);
       })
       .catch((e) => toast.error(e.message || "Failed to establish workspace"));
@@ -167,6 +150,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       name: "Plan & Billing",
       path: "/settings",
       icon: Sparkles
+    },
+    {
+      name: "Workspace Settings",
+      path: activeWorkspace ? `/workspaces/${activeWorkspace.id}/settings` : "/dashboard",
+      icon: Sliders
     }
   ];
 
@@ -293,15 +281,48 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <Lock className="h-3 w-3 inline" /> <span>Admin Operations</span>
               </span>
               <Link
-                to="/admin/users"
-                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-semibold transition ${
-                  location.pathname.startsWith("/admin")
+                to="/admin"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-semibold transition mb-1 ${
+                  location.pathname === "/admin"
                     ? "bg-rose-950/50 text-rose-200"
                     : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 }`}
               >
-                <Settings className="h-4 w-4 text-rose-500" />
-                <span>Superuser Panel</span>
+                <Shield className="h-4 w-4 text-rose-500" />
+                <span>Admin Dashboard</span>
+              </Link>
+              <Link
+                to="/admin/users"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-semibold transition mb-1 ${
+                  location.pathname === "/admin/users"
+                    ? "bg-rose-950/50 text-rose-200"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                }`}
+              >
+                <Users className="h-4 w-4 text-rose-500" />
+                <span>User Management</span>
+              </Link>
+              <Link
+                to="/admin/workspaces"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-semibold transition mb-1 ${
+                  location.pathname === "/admin/workspaces"
+                    ? "bg-rose-950/50 text-rose-200"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                }`}
+              >
+                <Building className="h-4 w-4 text-rose-500" />
+                <span>All Workspaces</span>
+              </Link>
+              <Link
+                to="/admin/audit-logs"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-semibold transition ${
+                  location.pathname === "/admin/audit-logs"
+                    ? "bg-rose-950/50 text-rose-200"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                }`}
+              >
+                <FileText className="h-4 w-4 text-rose-500" />
+                <span>Audit Logs</span>
               </Link>
             </div>
           )}

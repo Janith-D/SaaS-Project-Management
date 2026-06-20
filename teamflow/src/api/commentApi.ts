@@ -13,6 +13,11 @@ export const commentApi = {
     return mapComment(response.data);
   },
 
+  updateComment: async (commentId: string, content: string): Promise<TaskComment> => {
+    const response = await axiosInstance.put<any>(`/comments/${commentId}`, { content });
+    return mapComment(response.data);
+  },
+
   deleteComment: async (commentId: string): Promise<void> => {
     await axiosInstance.delete(`/comments/${commentId}`);
   },
@@ -22,9 +27,31 @@ export const commentApi = {
     return (response.data || []).map(mapAttachment);
   },
 
-  uploadAttachment: async (taskId: string, _name: string, _type: string, _size: number, _mockUrl?: string): Promise<TaskAttachment> => {
-    const response = await axiosInstance.post<any>(`/tasks/${taskId}/attachments`, {});
+  uploadAttachment: async (taskId: string, fileName: string, fileType: string, fileSize: number, file?: File): Promise<TaskAttachment> => {
+    if (!file) {
+      return mapAttachment({
+        id: crypto.randomUUID(),
+        fileName,
+        fileType,
+        fileSize,
+        fileUrl: URL.createObjectURL(new Blob(["mock"], { type: fileType })),
+        uploadedBy: "",
+        createdAt: new Date().toISOString()
+      });
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await axiosInstance.post<any>(`/tasks/${taskId}/attachments`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
     return mapAttachment(response.data);
+  },
+
+  downloadAttachment: async (attachmentId: string): Promise<Blob> => {
+    const response = await axiosInstance.get(`/attachments/${attachmentId}/download`, {
+      responseType: "blob"
+    });
+    return response.data;
   },
 
   deleteAttachment: async (attachmentId: string): Promise<void> => {

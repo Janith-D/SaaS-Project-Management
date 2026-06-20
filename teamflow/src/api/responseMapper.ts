@@ -49,23 +49,24 @@ export function mapComment(raw: any): TaskComment {
     id: raw.id,
     taskId: raw.taskId,
     authorId: raw.authorId || raw.userId,
-    authorName: raw.authorName || raw.author?.fullName || "",
-    authorAvatar: raw.authorAvatar,
+    authorName: raw.authorName || "",
+    authorAvatar: raw.authorProfileImage || raw.authorAvatar,
     content: raw.content || raw.commentText,
     createdAt: raw.createdAt
   };
 }
 
 export function mapAttachment(raw: any): TaskAttachment {
+  const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/api\/v1$/, "") || "";
   return {
     id: raw.id,
     taskId: raw.taskId,
     name: raw.fileName || raw.name,
     size: raw.fileSize || raw.size || 0,
     type: raw.fileType || raw.type || "",
-    url: raw.fileUrl || raw.url || "#",
+    url: raw.fileUrl || raw.url || (raw.id ? `${baseUrl}/api/v1/attachments/${raw.id}/download` : "#"),
     uploadedBy: raw.uploadedBy,
-    uploadedByName: raw.uploadedByName || raw.uploadedBy?.fullName || "",
+    uploadedByName: raw.uploadedByName || "",
     uploadedAt: raw.createdAt || raw.uploadedAt
   };
 }
@@ -119,6 +120,8 @@ export function mapNotification(raw: any): any {
     message: raw.message,
     read: raw.read !== undefined ? raw.read : raw.isRead,
     createdAt: raw.createdAt,
-    type: raw.type || "GENERAL"
+    type: raw.type || "GENERAL",
+    relatedEntityType: raw.relatedEntityType || null,
+    relatedEntityId: raw.relatedEntityId || null
   };
 }

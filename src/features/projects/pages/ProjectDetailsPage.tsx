@@ -35,7 +35,7 @@ export const ProjectDetailsPage: React.FC = () => {
   const activeProjId = projectId || "";
   const queryClient = useQueryClient();
 
-  const activeWsId = localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = localStorage.getItem("activeWorkspaceId") || "";
 
   // Filter and Search states
   const [searchQuery, setSearchQuery] = useState("");

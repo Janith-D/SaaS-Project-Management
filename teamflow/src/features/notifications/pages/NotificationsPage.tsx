@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationApi } from "../../../api/notificationApi";
 import {
@@ -9,7 +9,10 @@ import {
   AlertTriangle,
   FolderDot,
   Fingerprint,
-  MailOpen
+  MailOpen,
+  TrendingUp,
+  MessageCircle,
+  Users
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -39,12 +42,20 @@ export const NotificationsPage: React.FC = () => {
 
   const getTypeStyle = (type: string) => {
     switch (type) {
-      case "ASSIGNMENT":
+      case "TASK_ASSIGNED":
         return { bg: "bg-blue-50 text-blue-700 border-blue-200", icon: Fingerprint };
-      case "MENTION":
+      case "TASK_STATUS_CHANGED":
+        return { bg: "bg-purple-50 text-purple-700 border-purple-200", icon: TrendingUp };
+      case "COMMENT_ADDED":
+        return { bg: "bg-green-50 text-green-700 border-green-200", icon: MessageCircle };
+      case "USER_MENTIONED":
         return { bg: "bg-amber-50 text-amber-700 border-amber-200", icon: Mail };
-      case "PROJECT":
-        return { bg: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: FolderDot };
+      case "DEADLINE_REMINDER":
+        return { bg: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle };
+      case "INVITATION_SENT":
+        return { bg: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: Users };
+      case "PROJECT_COMPLETED":
+        return { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle };
       default:
         return { bg: "bg-slate-100 text-slate-700 border-slate-200", icon: Bell };
     }

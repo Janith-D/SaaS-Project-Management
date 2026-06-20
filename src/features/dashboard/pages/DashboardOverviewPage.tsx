@@ -33,7 +33,7 @@ import { formatDate, formatTimeAgo } from "../../../utils/formatDate";
 
 export const DashboardOverviewPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const activeWsId = localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = localStorage.getItem("activeWorkspaceId") || "";
 
   // State for Create Project quick-toggle
   const [isQuickProjectOpen, setIsQuickProjectOpen] = useState(false);

@@ -18,7 +18,7 @@ import { formatDate } from "../../../utils/formatDate";
 
 export const ProjectsListPage: React.FC = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const activeWsId = workspaceId || localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = workspaceId || localStorage.getItem("activeWorkspaceId") || "";
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);

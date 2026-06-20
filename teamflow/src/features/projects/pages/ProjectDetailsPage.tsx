@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWorkspace } from "../../../context/WorkspaceContext";
+import { workspaceApi } from "../../../api/workspaceApi";
 import { projectApi } from "../../../api/projectApi";
 import { taskApi } from "../../../api/taskApi";
 import { commentApi } from "../../../api/commentApi";
-import { workspaceApi } from "../../../api/workspaceApi";
 import { TaskStatus, TaskPriority, TaskType, Task, TaskComment, TaskAttachment } from "../../../types/task.types";
 import {
   FolderKanban,
@@ -34,8 +35,9 @@ export const ProjectDetailsPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const activeProjId = projectId || "";
   const queryClient = useQueryClient();
+  const { activeWorkspace } = useWorkspace();
 
-  const activeWsId = localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = activeWorkspace?.id || "";
 
   // Filter and Search states
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,7 +110,7 @@ export const ProjectDetailsPage: React.FC = () => {
       toast.success(`Task "${newT.title}" created successfully!`);
       closeCreateModal();
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
   const updateTaskMutation = useMutation({
@@ -124,7 +126,7 @@ export const ProjectDetailsPage: React.FC = () => {
         setSelectedTask(updatedTask);
       }
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
   const deleteTaskMutation = useMutation({
@@ -136,7 +138,7 @@ export const ProjectDetailsPage: React.FC = () => {
       toast.success("Task deleted permanently.");
       closeDetailDrawer();
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
   // Comment & Attachment Mutations
@@ -148,7 +150,7 @@ export const ProjectDetailsPage: React.FC = () => {
       setCommentText("");
       toast.success("Comment posted!");
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
   const deleteCommentMutation = useMutation({
@@ -529,7 +531,7 @@ export const ProjectDetailsPage: React.FC = () => {
                   description: taskDesc,
                   priority: taskPriority,
                   type: taskType,
-                  dueDate: taskDueDate || undefined,
+                  dueDate: taskDueDate ? taskDueDate + "T23:59:00" : undefined,
                   assigneeId: taskAssigneeId || undefined,
                   estimatedHours: taskEstHours,
                   status: createColumnTarget

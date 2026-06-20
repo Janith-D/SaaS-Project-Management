@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 
 export const MembersListPage: React.FC = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const activeWsId = workspaceId || localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = workspaceId || localStorage.getItem("activeWorkspaceId") || "";
   const queryClient = useQueryClient();
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);

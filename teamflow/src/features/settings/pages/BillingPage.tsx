@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWorkspace } from "../../../context/WorkspaceContext";
 import { workspaceApi } from "../../../api/workspaceApi";
 import { Workspace } from "../../../types/workspace.types";
 import {
@@ -17,9 +18,10 @@ import toast from "react-hot-toast";
 
 export const BillingPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const activeWsId = localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const { activeWorkspace } = useWorkspace();
+  const activeWsId = activeWorkspace?.id || "";
 
-  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
+  const [localWorkspace, setLocalWorkspace] = useState<Workspace | null>(null);
 
   // Load workspaces
   useEffect(() => {
@@ -27,7 +29,7 @@ export const BillingPage: React.FC = () => {
       try {
         const list = await workspaceApi.getWorkspaces();
         const found = list.find((w) => w.id === activeWsId) || list[0];
-        if (found) setActiveWorkspace(found);
+        if (found) setLocalWorkspace(found);
       } catch (err) {
         console.error(err);
       }
@@ -43,7 +45,7 @@ export const BillingPage: React.FC = () => {
         plan
       }),
     onSuccess: (updated) => {
-      setActiveWorkspace(updated);
+      setLocalWorkspace(updated);
       queryClient.invalidateQueries({ queryKey: ["workspaceStats", activeWsId] });
       toast.success(`Ecosystem upgraded! Workspace updated to: ${updated.plan}`);
     },

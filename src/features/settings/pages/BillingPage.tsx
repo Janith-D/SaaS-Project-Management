@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 
 export const BillingPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const activeWsId = localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = localStorage.getItem("activeWorkspaceId") || "";
 
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
 

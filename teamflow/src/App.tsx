@@ -7,6 +7,7 @@ import React from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./app/queryClient";
 import { AuthProvider } from "./context/AuthContext";
+import { WorkspaceProvider } from "./context/WorkspaceContext";
 import AppRouter from "./app/router";
 import { Toaster } from "react-hot-toast";
 
@@ -14,7 +15,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* Real-time elegant feedback toast triggers */}
+        <WorkspaceProvider>
+          {/* Real-time elegant feedback toast triggers */}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -36,6 +38,7 @@ export default function App() {
           }}
         />
         <AppRouter />
+        </WorkspaceProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

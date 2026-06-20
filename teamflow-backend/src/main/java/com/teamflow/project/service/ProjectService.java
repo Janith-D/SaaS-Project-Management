@@ -2,6 +2,8 @@ package com.teamflow.project.service;
 
 import com.teamflow.common.exception.BadRequestException;
 import com.teamflow.common.exception.ResourceNotFoundException;
+import com.teamflow.notification.enums.NotificationType;
+import com.teamflow.notification.service.NotificationService;
 import com.teamflow.project.dto.*;
 import com.teamflow.project.entity.Project;
 import com.teamflow.project.entity.ProjectMember;
@@ -30,6 +32,7 @@ public class ProjectService {
     private final WorkspaceRepository workspaceRepository;
     private final TaskRepository taskRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Transactional
     public ProjectResponse createProject(UUID workspaceId, UUID userId, CreateProjectRequest request) {
@@ -58,12 +61,14 @@ public class ProjectService {
         return toProjectResponse(project);
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectResponse> getWorkspaceProjects(UUID workspaceId) {
         return projectRepository.findByWorkspaceIdAndArchivedFalseOrderByCreatedAtDesc(workspaceId).stream()
                 .map(this::toProjectResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public ProjectResponse getProject(UUID projectId) {
         Project project = findProject(projectId);
         return toProjectResponse(project);
@@ -86,8 +91,26 @@ public class ProjectService {
     public ProjectResponse updateProjectStatus(UUID projectId, UUID userId, UpdateProjectStatusRequest request) {
         Project project = findProject(projectId);
         checkManager(project, userId);
+        ProjectStatus oldStatus = project.getStatus();
         project.setStatus(request.getStatus());
         project = projectRepository.save(project);
+
+        if (request.getStatus() == ProjectStatus.COMPLETED && oldStatus != ProjectStatus.COMPLETED) {
+            List<ProjectMember> members = memberRepository.findByProjectId(projectId);
+            for (ProjectMember member : members) {
+                if (!member.getUser().getId().equals(userId)) {
+                    notificationService.createNotification(
+                            member.getUser().getId(),
+                            NotificationType.PROJECT_COMPLETED,
+                            "Project Completed: " + project.getName(),
+                            "Project \"" + project.getName() + "\" has been marked as completed",
+                            "PROJECT",
+                            projectId
+                    );
+                }
+            }
+        }
+
         return toProjectResponse(project);
     }
 
@@ -118,6 +141,7 @@ public class ProjectService {
         return toProjectMemberResponse(member);
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectMemberResponse> getProjectMembers(UUID projectId) {
         return memberRepository.findByProjectId(projectId).stream()
                 .map(this::toProjectMemberResponse)

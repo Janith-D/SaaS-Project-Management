@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWorkspace } from "../../../context/WorkspaceContext";
 import { dashboardApi } from "../../../api/dashboardApi";
 import { projectApi } from "../../../api/projectApi";
 import {
@@ -33,7 +34,8 @@ import { formatDate, formatTimeAgo } from "../../../utils/formatDate";
 
 export const DashboardOverviewPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const activeWsId = localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const { activeWorkspace, workspacesLoaded } = useWorkspace();
+  const activeWsId = activeWorkspace?.id || "";
 
   // State for Create Project quick-toggle
   const [isQuickProjectOpen, setIsQuickProjectOpen] = useState(false);

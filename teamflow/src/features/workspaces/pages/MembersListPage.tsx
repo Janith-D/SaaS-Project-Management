@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 
 export const MembersListPage: React.FC = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const activeWsId = workspaceId || localStorage.getItem("activeWorkspaceId") || "ws-1";
+  const activeWsId = workspaceId || localStorage.getItem("activeWorkspaceId") || "";
   const queryClient = useQueryClient();
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -44,7 +44,7 @@ export const MembersListPage: React.FC = () => {
       setInviteEmail("");
       setInviteRole("MEMBER");
     },
-    onError: (e: any) => toast.error(e.message || "Invitation error.")
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message || "Invitation error.")
   });
 
   // Update Role Mutation
@@ -55,7 +55,7 @@ export const MembersListPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["members", activeWsId] });
       toast.success("Team member permission level adjusted.");
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
   // Remove Member Mutation
@@ -65,7 +65,7 @@ export const MembersListPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["members", activeWsId] });
       toast.success("Workspace seat relinquished safely.");
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
   const handleInviteSubmit = (e: React.FormEvent) => {

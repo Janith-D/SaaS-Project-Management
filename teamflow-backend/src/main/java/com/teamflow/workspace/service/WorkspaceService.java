@@ -2,6 +2,8 @@ package com.teamflow.workspace.service;
 
 import com.teamflow.common.exception.BadRequestException;
 import com.teamflow.common.exception.ResourceNotFoundException;
+import com.teamflow.notification.enums.NotificationType;
+import com.teamflow.notification.service.NotificationService;
 import com.teamflow.user.entity.User;
 import com.teamflow.user.service.UserService;
 import com.teamflow.workspace.dto.*;
@@ -31,6 +33,7 @@ public class WorkspaceService {
     private final InvitationRepository invitationRepository;
     private final ProjectRepository projectRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Transactional
     public WorkspaceResponse createWorkspace(UUID ownerId, CreateWorkspaceRequest request) {
@@ -53,6 +56,7 @@ public class WorkspaceService {
         return toWorkspaceResponse(workspace);
     }
 
+    @Transactional(readOnly = true)
     public List<WorkspaceResponse> getUserWorkspaces(UUID userId) {
         List<WorkspaceMember> memberships = memberRepository.findByUserId(userId);
         return memberships.stream()
@@ -60,6 +64,7 @@ public class WorkspaceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public WorkspaceResponse getWorkspace(UUID workspaceId) {
         Workspace workspace = findWorkspace(workspaceId);
         return toWorkspaceResponse(workspace);
@@ -122,9 +127,27 @@ public class WorkspaceService {
                 .build();
         invitation = invitationRepository.save(invitation);
 
+        // Notify invited user if they exist
+        try {
+            User invitedUser = userService.getUserByEmail(request.getEmail());
+            if (invitedUser != null) {
+                notificationService.createNotification(
+                        invitedUser.getId(),
+                        NotificationType.INVITATION_SENT,
+                        "Workspace Invitation",
+                        "You have been invited to join \"" + workspace.getName() + "\" by " + inviter.getFullName(),
+                        "WORKSPACE",
+                        workspaceId
+                );
+            }
+        } catch (Exception ignored) {
+            // User not found by email, skip in-app notification
+        }
+
         return toInvitationResponse(invitation);
     }
 
+    @Transactional(readOnly = true)
     public List<InvitationResponse> getWorkspaceInvitations(UUID workspaceId) {
         return invitationRepository.findByWorkspaceId(workspaceId).stream()
                 .map(this::toInvitationResponse)
@@ -154,6 +177,23 @@ public class WorkspaceService {
 
         invitation.setStatus(InvitationStatus.ACCEPTED);
         invitationRepository.save(invitation);
+
+        // Notify workspace owner/admins that invitation was accepted
+        List<WorkspaceMember> admins = memberRepository.findByWorkspaceId(invitation.getWorkspace().getId()).stream()
+                .filter(m -> m.getRole() == WorkspaceMemberRole.WORKSPACE_OWNER || m.getRole() == WorkspaceMemberRole.WORKSPACE_ADMIN)
+                .toList();
+        for (WorkspaceMember admin : admins) {
+            if (!admin.getUser().getId().equals(userId)) {
+                notificationService.createNotification(
+                        admin.getUser().getId(),
+                        NotificationType.INVITATION_SENT,
+                        "Invitation Accepted",
+                        user.getFullName() + " accepted the invitation to \"" + invitation.getWorkspace().getName() + "\"",
+                        "WORKSPACE",
+                        invitation.getWorkspace().getId()
+                );
+            }
+        }
     }
 
     @Transactional
@@ -170,6 +210,7 @@ public class WorkspaceService {
         invitationRepository.save(invitation);
     }
 
+    @Transactional(readOnly = true)
     public List<WorkspaceMemberResponse> getWorkspaceMembers(UUID workspaceId) {
         return memberRepository.findByWorkspaceId(workspaceId).stream()
                 .map(this::toWorkspaceMemberResponse)

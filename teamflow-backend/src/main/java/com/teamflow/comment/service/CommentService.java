@@ -6,6 +6,8 @@ import com.teamflow.comment.dto.UpdateCommentRequest;
 import com.teamflow.comment.entity.Comment;
 import com.teamflow.comment.repository.CommentRepository;
 import com.teamflow.common.exception.ResourceNotFoundException;
+import com.teamflow.notification.enums.NotificationType;
+import com.teamflow.notification.service.NotificationService;
 import com.teamflow.task.entity.Task;
 import com.teamflow.task.repository.TaskRepository;
 import com.teamflow.user.entity.User;
@@ -24,6 +26,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final TaskRepository taskRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CommentResponse createComment(UUID taskId, UUID userId, CreateCommentRequest request) {
@@ -37,6 +40,39 @@ public class CommentService {
                 .content(request.getContent())
                 .build();
         comment = commentRepository.save(comment);
+
+        // Notify task assignee about new comment
+        if (task.getAssignee() != null && !task.getAssignee().getId().equals(author.getId())) {
+            notificationService.createNotification(
+                    task.getAssignee().getId(),
+                    NotificationType.COMMENT_ADDED,
+                    "New Comment on: " + task.getTitle(),
+                    author.getFullName() + " commented on \"" + task.getTitle() + "\"",
+                    "TASK",
+                    task.getId()
+            );
+        }
+
+        // Notify @mentioned users
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("@(\\S+)").matcher(request.getContent());
+        while (matcher.find()) {
+            String mentionedName = matcher.group(1);
+            try {
+                User mentioned = userService.getUserByEmail(mentionedName);
+                if (mentioned != null && !mentioned.getId().equals(author.getId())) {
+                    notificationService.createNotification(
+                            mentioned.getId(),
+                            NotificationType.USER_MENTIONED,
+                            "You were mentioned in: " + task.getTitle(),
+                            author.getFullName() + " mentioned you in a comment on \"" + task.getTitle() + "\"",
+                            "TASK",
+                            task.getId()
+                    );
+                }
+            } catch (Exception ignored) {
+                // User not found by that email, skip
+            }
+        }
 
         return toCommentResponse(comment);
     }

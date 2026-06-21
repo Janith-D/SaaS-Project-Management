@@ -1,0 +1,15 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/teamflow
+    overwrite: true
+hooks:
+  ApplicationStop:
+    - location: scripts/stop.sh
+      timeout: 60
+      runas: ubuntu
+  AfterInstall:
+    - location: scripts/deploy.sh
+      timeout: 600
+      runas: ubuntu

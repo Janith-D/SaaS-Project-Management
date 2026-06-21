@@ -33,3 +33,7 @@ jobs:
 
             bash scripts/stop.sh
             bash scripts/deploy.sh
+            echo "=== DIAGNOSTIC ==="
+            docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>&1 || true
+            docker compose -f teamflow-backend/docker-compose.prod.yml logs --tail=20 backend 2>&1 || true
+            echo "=== END DIAGNOSTIC ==="

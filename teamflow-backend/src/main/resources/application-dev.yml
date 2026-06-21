@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: teamflow-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/teamflow_db
+    username: postgres
+    password: 2001
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        auto-startup: false
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    secret: Y2hhbmdlLXRoaXMtc2VjcmV0LWtleS10by1hLXZlcnktbG9uZy1zZWN1cmUtc2VjcmV0LWtleS0yMDI0
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000
+  rabbitmq:
+    enabled: false
+  file:
+    upload-dir: uploads
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true

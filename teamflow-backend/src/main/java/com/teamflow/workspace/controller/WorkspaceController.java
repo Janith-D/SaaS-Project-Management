@@ -3,6 +3,7 @@ package com.teamflow.workspace.controller;
 import com.teamflow.common.response.ApiResponse;
 import com.teamflow.user.entity.User;
 import com.teamflow.workspace.dto.*;
+import com.teamflow.workspace.enums.WorkspaceMemberRole;
 import com.teamflow.workspace.service.WorkspaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,5 +66,13 @@ public class WorkspaceController {
             @AuthenticationPrincipal User user) {
         workspaceService.deleteWorkspace(workspaceId, user.getId());
         return ResponseEntity.ok(ApiResponse.success(200, "Workspace deleted", null));
+    }
+
+    @GetMapping("/{workspaceId}/my-role")
+    public ResponseEntity<ApiResponse<WorkspaceMemberRole>> getMyRole(
+            @PathVariable UUID workspaceId,
+            @AuthenticationPrincipal User user) {
+        WorkspaceMemberRole role = workspaceService.getMyRole(workspaceId, user.getId());
+        return ResponseEntity.ok(ApiResponse.success(200, "Role retrieved", role));
     }
 }

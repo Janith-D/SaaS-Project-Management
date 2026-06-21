@@ -8,6 +8,11 @@ export function usePermission(role?: WorkspaceRole) {
   const isViewer = role === "VIEWER";
 
   return {
+    isOwner,
+    isAdmin,
+    isManager,
+    isMember,
+    isViewer,
     canManageWorkspace: isAdmin,
     canInviteMembers: isAdmin,
     canCreateProjects: isManager,

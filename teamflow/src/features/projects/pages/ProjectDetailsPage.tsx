@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "../../../context/WorkspaceContext";
@@ -129,6 +129,20 @@ export const ProjectDetailsPage: React.FC = () => {
     onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
 
+  const moveTaskMutation = useMutation({
+    mutationFn: (variables: { id: string; status: TaskStatus }) =>
+      taskApi.updateTaskStatus(variables.id, variables.status),
+    onSuccess: (updatedTask) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", activeProjId] });
+      queryClient.invalidateQueries({ queryKey: ["workspaceStats", activeWsId] });
+      queryClient.invalidateQueries({ queryKey: ["activityLogs", activeWsId] });
+      if (selectedTask?.id === updatedTask.id) {
+        setSelectedTask(updatedTask);
+      }
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
+  });
+
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => taskApi.deleteTask(id),
     onSuccess: () => {
@@ -162,15 +176,30 @@ export const ProjectDetailsPage: React.FC = () => {
     }
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const uploadAttachmentMutation = useMutation({
-    mutationFn: (variables: { name: string; type: string; size: number }) =>
-      commentApi.uploadAttachment(selectedTask!.id, variables.name, variables.type, variables.size),
+    mutationFn: (file: File) =>
+      commentApi.uploadAttachment(selectedTask!.id, file.name, file.type, file.size, file),
     onSuccess: () => {
       refetchAttachments();
       queryClient.invalidateQueries({ queryKey: ["tasks", activeProjId] });
-      toast.success("Attachment linked successfully!");
-    }
+      toast.success("Attachment uploaded");
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message || e.message)
   });
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadAttachmentMutation.mutate(file);
+    }
+    e.target.value = "";
+  };
 
   const deleteAttachmentMutation = useMutation({
     mutationFn: (id: string) => commentApi.deleteAttachment(id),
@@ -207,8 +236,7 @@ export const ProjectDetailsPage: React.FC = () => {
       // Find the moving task
       const targetTask = tasks?.find((t) => t.id === taskId);
       if (targetTask && targetTask.status !== column) {
-        // Trigger mutate with optimistic updating feedback
-        updateTaskMutation.mutate({ id: taskId, updates: { status: column } });
+        moveTaskMutation.mutate({ id: taskId, status: column });
         toast.success(`Task moved to ${column.replace("_", " ")}`);
       }
     }
@@ -241,13 +269,7 @@ export const ProjectDetailsPage: React.FC = () => {
     addCommentMutation.mutate(commentText);
   };
 
-  const handleLocalFileUploadSimulation = () => {
-    const fileName = prompt("Enter simulated file name (e.g., api_response.json):") || "wireframe_v2.png";
-    const fileType = fileName.endsWith(".json") ? "application/json" : "image/png";
-    const fileSize = Math.floor(Math.random() * 4500000) + 50000;
-    
-    uploadAttachmentMutation.mutate({ name: fileName, type: fileType, size: fileSize });
-  };
+
 
   const closeCreateModal = () => {
     setIsCreateTaskOpen(false);
@@ -806,12 +828,19 @@ export const ProjectDetailsPage: React.FC = () => {
             <div className="py-5 border-b border-slate-100 space-y-3">
               <div className="flex justify-between items-center select-none">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Linked file attachments</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
                 <button
-                  onClick={handleLocalFileUploadSimulation}
-                  className="text-[10px] text-blue-650 hover:text-blue-800 font-bold flex items-center space-x-1"
+                  onClick={handleFileSelect}
+                  disabled={uploadAttachmentMutation.isPending}
+                  className="text-[10px] text-blue-650 hover:text-blue-800 font-bold flex items-center space-x-1 disabled:opacity-50"
                 >
                   <UploadCloud className="h-4 w-4 inline" />
-                  <span>Attach simulated document</span>
+                  <span>{uploadAttachmentMutation.isPending ? "Uploading..." : "Attach file"}</span>
                 </button>
               </div>
 
@@ -837,15 +866,25 @@ export const ProjectDetailsPage: React.FC = () => {
                         </div>
 
                         <div className="flex items-center space-x-2.5 shrink-0">
-                          <a
-                            href={att.url}
-                            target="_blank"
-                            rel="referrer"
+                          <button
+                            onClick={async () => {
+                              try {
+                                const blob = await commentApi.downloadAttachment(att.id);
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = att.name;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              } catch {
+                                window.open(att.url, "_blank");
+                              }
+                            }}
                             className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600"
-                            title="Open Preview link"
+                            title="Download file"
                           >
                             <Download className="h-3.5 w-3.5" />
-                          </a>
+                          </button>
                           <button
                             onClick={() => deleteAttachmentMutation.mutate(att.id)}
                             className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-500"

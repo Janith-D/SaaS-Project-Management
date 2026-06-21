@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { Workspace, WorkspaceInvitation } from "../types/workspace.types";
-import { WorkspaceMember } from "../types/user.types";
+import { WorkspaceMember, WorkspaceRole } from "../types/user.types";
 import { mapWorkspace, mapWorkspaceMember } from "./responseMapper";
 
 export const workspaceApi = {
@@ -62,5 +62,10 @@ export const workspaceApi = {
 
   removeMember: async (workspaceId: string, memberId: string): Promise<void> => {
     await axiosInstance.delete(`/workspaces/${workspaceId}/members/${memberId}`);
+  },
+
+  getMyRole: async (workspaceId: string): Promise<WorkspaceRole> => {
+    const response = await axiosInstance.get<WorkspaceRole>(`/workspaces/${workspaceId}/my-role`);
+    return response.data;
   }
 };

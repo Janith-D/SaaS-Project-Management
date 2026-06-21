@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useWorkspace } from "../../context/WorkspaceContext";
+import { useWorkspaceRole } from "../../hooks/useWorkspaceRole";
 import { Workspace } from "../../types/workspace.types";
 import { workspaceApi } from "../../api/workspaceApi";
 import { notificationApi } from "../../api/notificationApi";
@@ -41,6 +42,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const location = useLocation();
 
   const { workspaces, activeWorkspace, setActiveWorkspace, workspacesLoaded, refreshWorkspaces } = useWorkspace();
+  const { role: wsRole } = useWorkspaceRole(activeWorkspace?.id);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -332,6 +334,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         <div className="p-4 border-t border-slate-800 bg-[#0B0F19]">
           {activeWorkspace && (
             <div className="bg-slate-800/40 rounded-lg p-3.5 mb-3.5">
+              {wsRole && (
+                <p className="text-[10px] text-slate-400 mb-2">
+                  Role:{" "}
+                  <span className={`font-bold ${
+                    wsRole === "WORKSPACE_OWNER" ? "text-blue-400" :
+                    wsRole === "WORKSPACE_ADMIN" ? "text-slate-300" :
+                    wsRole === "PROJECT_MANAGER" ? "text-amber-400" :
+                    "text-slate-400"
+                  }`}>
+                    {wsRole.replace("WORKSPACE_", "").replace("_", " ")}
+                  </span>
+                </p>
+              )}
               <p className="text-xs text-slate-400 mb-1.5">
                 Plan: <span className="text-white font-semibold underline">{activeWorkspace.plan}</span>
               </p>

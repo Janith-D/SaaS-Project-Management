@@ -1,0 +1,94 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - teamflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    networks:
+      - teamflow-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    image: teamflow-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    expose:
+      - "8080"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - teamflow-network
+
+  frontend:
+    image: teamflow-frontend:latest
+    build:
+      context: ../teamflow
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+    restart: always
+    depends_on:
+      - backend
+    expose:
+      - "80"
+    networks:
+      - teamflow-network
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN}
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - teamflow-network
+
+volumes:
+  postgres_data:
+  uploads_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  teamflow-network:
+    driver: bridge

@@ -5,6 +5,7 @@ import { mapProject } from "./responseMapper";
 
 export const projectApi = {
   getProjects: async (workspaceId: string): Promise<Project[]> => {
+    if (!workspaceId) throw new Error("workspaceId is required");
     const response = await axiosInstance.get<any[]>(`/workspaces/${workspaceId}/projects`);
     return (response.data || []).map(mapProject);
   },

@@ -51,7 +51,7 @@ export const RegisterPage: React.FC = () => {
             Create your Workspace
           </h2>
           <p className="text-sm text-slate-500">
-            Sign up to establish organization nodes & manage workflows.
+            Create your account and set up your workspace.
           </p>
         </div>
 

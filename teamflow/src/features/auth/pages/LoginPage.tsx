@@ -56,7 +56,7 @@ export const LoginPage: React.FC = () => {
             Sign In to TeamFlow
           </h2>
           <p className="text-sm text-slate-500">
-            Access your SaaS workspace boards & team pipelines.
+            Sign in to manage your projects and team workspace.
           </p>
         </div>
 
@@ -142,29 +142,29 @@ export const LoginPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => fillQuickCredentials("janetdgo2001@gmail.com")}
+            onClick={() => fillQuickCredentials("admin@tf.com")}
             className="p-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-lg text-left text-xs transition duration-150"
           >
             <div className="flex items-center space-x-1 font-bold text-indigo-700">
               <Sparkles className="h-3 w-3 shrink-0" />
-              <span>Janet Gomez (Owner)</span>
+              <span>Administrator</span>
             </div>
             <p className="text-[10px] text-indigo-500/80 truncate mt-0.5">
-              janetdgo2001@gmail.com
+              admin@tf.com
             </p>
           </button>
           
           <button
             type="button"
-            onClick={() => fillQuickCredentials("admin@teamflow.com")}
+            onClick={() => fillQuickCredentials("alice@tf.com")}
             className="p-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-lg text-left text-xs transition duration-150"
           >
             <div className="flex items-center space-x-1 font-bold text-rose-700">
               <KeyRound className="h-3 w-3 shrink-0" />
-              <span>Platform Admin</span>
+              <span>Project Manager</span>
             </div>
             <p className="text-[10px] text-rose-500/80 truncate mt-0.5">
-              admin@teamflow.com
+              alice@tf.com
             </p>
           </button>
         </div>

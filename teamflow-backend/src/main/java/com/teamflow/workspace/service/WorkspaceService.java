@@ -1,6 +1,7 @@
 package com.teamflow.workspace.service;
 
 import com.teamflow.common.exception.BadRequestException;
+import com.teamflow.common.exception.ForbiddenException;
 import com.teamflow.common.exception.ResourceNotFoundException;
 import com.teamflow.notification.enums.NotificationType;
 import com.teamflow.notification.service.NotificationService;
@@ -238,6 +239,13 @@ public class WorkspaceService {
             throw new BadRequestException("Cannot remove workspace owner");
         }
         memberRepository.delete(member);
+    }
+
+    @Transactional(readOnly = true)
+    public WorkspaceMemberRole getMyRole(UUID workspaceId, UUID userId) {
+        return memberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
+                .map(WorkspaceMember::getRole)
+                .orElseThrow(() -> new ForbiddenException("Not a member of this workspace"));
     }
 
     public long getMemberCount(UUID workspaceId) {

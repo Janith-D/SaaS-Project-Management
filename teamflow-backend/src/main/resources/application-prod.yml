@@ -1,0 +1,76 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: teamflow-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:teamflow_db}
+    username: ${DB_USERNAME:teamflow_user}
+    password: ${DB_PASSWORD:teamflow_password}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:teamflow}
+    password: ${RABBITMQ_PASSWORD:teamflow_password}
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_ENABLED:false}
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  rabbitmq:
+    enabled: ${RABBITMQ_ENABLED:false}
+  file:
+    upload-dir: /app/uploads
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}

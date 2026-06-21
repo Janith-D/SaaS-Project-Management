@@ -2,6 +2,8 @@ package com.teamflow.task.service;
 
 import com.teamflow.common.exception.BadRequestException;
 import com.teamflow.common.exception.ResourceNotFoundException;
+import com.teamflow.notification.enums.NotificationType;
+import com.teamflow.notification.service.NotificationService;
 import com.teamflow.project.entity.Project;
 import com.teamflow.project.repository.ProjectRepository;
 import com.teamflow.task.dto.*;
@@ -10,6 +12,7 @@ import com.teamflow.task.enums.TaskStatus;
 import com.teamflow.task.repository.TaskRepository;
 import com.teamflow.user.entity.User;
 import com.teamflow.user.service.UserService;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +32,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Transactional
     public TaskResponse createTask(UUID projectId, UUID userId, CreateTaskRequest request) {
@@ -54,13 +58,32 @@ public class TaskService {
                 .build();
 
         task = taskRepository.save(task);
+
+        if (task.getAssignee() != null) {
+            notificationService.createNotification(
+                    task.getAssignee().getId(),
+                    NotificationType.TASK_ASSIGNED,
+                    "New Task: " + task.getTitle(),
+                    "You have been assigned to \"" + task.getTitle() + "\" in " + task.getProject().getName(),
+                    "TASK",
+                    task.getId()
+            );
+        }
+
         return toTaskResponse(task);
     }
 
+    @Transactional(readOnly = true)
     public Page<TaskResponse> getProjectTasks(UUID projectId, TaskFilterRequest filter, Pageable pageable) {
         Specification<Task> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("project").get("id"), projectId));
+
+            if (!Long.class.equals(query.getResultType())) {
+                root.fetch("assignee", JoinType.LEFT);
+                root.fetch("reporter", JoinType.LEFT);
+            }
+
             if (filter == null) return cb.and(predicates.toArray(new Predicate[0]));
 
             if (filter.getStatus() != null) predicates.add(cb.equal(root.get("status"), filter.getStatus()));
@@ -76,6 +99,7 @@ public class TaskService {
         return taskRepository.findAll(spec, pageable).map(this::toTaskResponse);
     }
 
+    @Transactional(readOnly = true)
     public TaskResponse getTask(UUID taskId) {
         Task task = findTask(taskId);
         return toTaskResponse(task);
@@ -105,8 +129,21 @@ public class TaskService {
     @Transactional
     public TaskResponse updateStatus(UUID taskId, UUID userId, UpdateTaskStatusRequest request) {
         Task task = findTask(taskId);
+        TaskStatus oldStatus = task.getStatus();
         task.setStatus(request.getStatus());
         task = taskRepository.save(task);
+
+        if (task.getAssignee() != null) {
+            notificationService.createNotification(
+                    task.getAssignee().getId(),
+                    NotificationType.TASK_STATUS_CHANGED,
+                    "Task Status Updated: " + task.getTitle(),
+                    "Task \"" + task.getTitle() + "\" moved from " + oldStatus + " to " + request.getStatus(),
+                    "TASK",
+                    task.getId()
+            );
+        }
+
         return toTaskResponse(task);
     }
 
@@ -115,6 +152,18 @@ public class TaskService {
         Task task = findTask(taskId);
         task.setAssignee(request.getAssigneeId() != null ? userService.getUserById(request.getAssigneeId()) : null);
         task = taskRepository.save(task);
+
+        if (task.getAssignee() != null) {
+            notificationService.createNotification(
+                    task.getAssignee().getId(),
+                    NotificationType.TASK_ASSIGNED,
+                    "Task Assigned: " + task.getTitle(),
+                    "You have been assigned to \"" + task.getTitle() + "\" in " + task.getProject().getName(),
+                    "TASK",
+                    task.getId()
+            );
+        }
+
         return toTaskResponse(task);
     }
 
@@ -137,9 +186,22 @@ public class TaskService {
     @Transactional
     public TaskResponse moveTask(UUID taskId, MoveTaskRequest request) {
         Task task = findTask(taskId);
+        TaskStatus oldStatus = task.getStatus();
         task.setStatus(request.getNewStatus());
         task.setPosition(request.getPosition());
         task = taskRepository.save(task);
+
+        if (task.getAssignee() != null) {
+            notificationService.createNotification(
+                    task.getAssignee().getId(),
+                    NotificationType.TASK_STATUS_CHANGED,
+                    "Task Moved: " + task.getTitle(),
+                    "Task \"" + task.getTitle() + "\" moved from " + oldStatus + " to " + request.getNewStatus(),
+                    "TASK",
+                    task.getId()
+            );
+        }
+
         return toTaskResponse(task);
     }
 

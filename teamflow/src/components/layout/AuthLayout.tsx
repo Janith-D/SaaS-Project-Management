@@ -19,10 +19,10 @@ export const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
         <div className="space-y-6 z-10 max-w-sm">
           <h1 className="text-3xl font-bold tracking-tight leading-tight">
-            Streamline tasks, projects, & workspace goals in real-time.
+            Centralize your projects, tasks, and team workflows.
           </h1>
           <p className="text-slate-300 text-sm leading-relaxed">
-            Unite your dev teams with an interactive Kanban board, real-time activity metrics, sub-task breakdowns, and role scopes. Designed specifically for robust Spring Boot development feedback.
+            Manage projects with Kanban boards, track team activity, assign subtasks, and control access with role-based permissions. Built for modern development teams.
           </p>
         </div>
 

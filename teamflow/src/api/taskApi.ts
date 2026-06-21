@@ -4,8 +4,9 @@ import { mapTask } from "./responseMapper";
 
 export const taskApi = {
   getTasks: async (projectId: string): Promise<Task[]> => {
-    const response = await axiosInstance.get<any[]>(`/projects/${projectId}/tasks`);
-    return (response.data || []).map(mapTask);
+    const response = await axiosInstance.get<any>(`/projects/${projectId}/tasks`);
+    const tasks = response.data?.content ?? (Array.isArray(response.data) ? response.data : []);
+    return tasks.map(mapTask);
   },
 
   getTask: async (taskId: string): Promise<Task> => {

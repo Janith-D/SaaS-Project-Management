@@ -29,7 +29,8 @@ jobs:
           script: |
             cd /home/ubuntu/teamflow
             echo "${{ secrets.ENV_FILE_B64 }}" | base64 -d > teamflow-backend/.env
-            bash scripts/stop.sh
+            # Wipe old DB volume (passwords don't match old DB)
+            docker compose -f teamflow-backend/docker-compose.prod.yml down -v 2>&1 || true
             bash scripts/deploy.sh
 
       - name: Diagnostic

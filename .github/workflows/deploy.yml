@@ -28,7 +28,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/teamflow
-            echo "${{ secrets.ENV_FILE_B64 }}" | base64 -d > teamflow-backend/.env
+            echo "${{ secrets.ENV_FILE_B64 }}" | base64 -d > .env
+            cp .env teamflow-backend/.env
             # Wipe old DB volume (passwords don't match old DB)
             docker compose -f teamflow-backend/docker-compose.prod.yml down -v 2>&1 || true
             bash scripts/deploy.sh

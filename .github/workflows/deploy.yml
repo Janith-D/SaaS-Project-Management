@@ -31,3 +31,18 @@ jobs:
             echo "${{ secrets.ENV_FILE_B64 }}" | base64 -d > teamflow-backend/.env
             bash scripts/stop.sh
             bash scripts/deploy.sh
+
+      - name: Diagnostic
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/teamflow
+            echo "=== CONTAINERS ==="
+            docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>&1 || true
+            echo "=== BACKEND LOGS ==="
+            docker compose -f teamflow-backend/docker-compose.prod.yml logs --tail=30 backend 2>&1 || true
+            echo "=== CADDY LOGS ==="
+            docker compose -f teamflow-backend/docker-compose.prod.yml logs --tail=10 caddy 2>&1 || true

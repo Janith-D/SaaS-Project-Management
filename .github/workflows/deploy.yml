@@ -30,6 +30,8 @@ jobs:
             cd /home/ubuntu/teamflow
             echo "${{ secrets.ENV_FILE_B64 }}" | base64 -d > .env
             cp .env teamflow-backend/.env
+            # Remove old backup so deploy.sh doesn't overwrite our .env
+            rm -f /home/ubuntu/.env.production
             # Wipe old DB volume (passwords don't match old DB)
             docker compose -f teamflow-backend/docker-compose.prod.yml down -v 2>&1 || true
             bash scripts/deploy.sh
